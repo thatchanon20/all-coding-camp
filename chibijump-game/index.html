@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chibi Jump! - เกมกระโดดอนิเมะสุดน่ารัก</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mali:wght@400;600;700&display=swap');
+        
+        * { box-sizing: border-box; font-family: 'Mali', cursive, sans-serif; }
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #feada6 100%);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #5d4037;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.92);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 12px 30px rgba(255, 105, 180, 0.3);
+            text-align: center;
+            width: 480px;
+            max-width: 95%;
+            border: 4px solid #fff;
+        }
+        .hidden { display: none !important; }
+
+        /* Login Screen */
+        .login-box h2 {
+            color: #ff6b81;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            border: 2px solid #ffb6c1;
+            border-radius: 12px;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            background: #fffaf0;
+            color: #5d4037;
+        }
+        .login-box input:focus { border-color: #ff6b81; }
+
+        /* Game Screen */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: 700;
+            color: #ff4757;
+            background: #ffeaa7;
+            padding: 8px 15px;
+            border-radius: 12px;
+        }
+        #gameCanvas {
+            background: linear-gradient(to bottom, #a1c4fd 0%, #c2e9fb 100%);
+            border: 4px solid #ffb6c1;
+            border-radius: 16px;
+            display: block;
+            margin: 0 auto;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        /* Buttons */
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            background: #ff6b81;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(255, 107, 129, 0.4);
+            margin-top: 10px;
+        }
+        button:hover { 
+            background: #ff4757; 
+            transform: translateY(-2px);
+        }
+        .btn-danger { 
+            background: #ffa502; 
+            box-shadow: 0 4px 10px rgba(255, 165, 2, 0.4);
+        }
+        .btn-danger:hover { background: #eccc68; }
+
+        /* History Table */
+        .history-box {
+            margin-top: 20px;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            border-top: 2px dashed #ffb6c1;
+            padding-top: 12px;
+        }
+        .history-box h4 {
+            color: #ff6b81;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th { color: #ff4757; }
+        th, td {
+            padding: 6px;
+            text-align: center;
+            border-bottom: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- หน้า Login -->
+        <div id="loginScreen" class="login-box">
+            <h2>✨ Chibi Jump! ✨</h2>
+            <p>🌸 กรอกชื่อผู้เล่นสุดน่ารักของคุณ 🌸</p>
+            <input type="text" id="usernameInput" placeholder="พิมพ์ชื่อตรงนี้เลยจ้า..." maxlength="15">
+            <button onclick="login()">เข้าสู่โลกอนิเมะ 🎀</button>
+        </div>
+
+        <!-- หน้า Game -->
+        <div id="gameScreen" class="hidden">
+            <div class="game-header">
+                <span>🎀 <span id="displayName"></span></span>
+                <span>👑 สูงสุด: <span id="highScore">0</span></span>
+                <span>💖 คะแนน: <span id="currentScore">0</span></span>
+            </div>
+
+            <canvas id="gameCanvas" width="400" height="200"></canvas>
+            
+            <p style="font-size: 14px; color: #ff6b81; margin: 8px 0; font-weight: 600;">
+                กด <b>Spacebar</b> หรือ <b>แตะหน้าจอ</b> เพื่อกระโดด 🐾
+            </p>
+            
+            <button id="startBtn" onclick="startGame()">เริ่มเล่นเกม 🎮</button>
+            <button onclick="logout()" class="btn-danger" style="padding: 6px 12px; font-size: 13px; margin-top: 12px;">เปลี่ยนตัวละคร</button>
+
+            <!-- ตารางสถิติประวัติการเล่น -->
+            <div class="history-box">
+                <h4 style="margin: 0 0 8px 0;">📊 บันทึกสถิติรอบล่าสุด</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>รอบที่</th>
+                            <th>เวลา</th>
+                            <th>คะแนน</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyList">
+                        <!-- รายการประวัติ -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = "";
+        let canvas = document.getElementById("gameCanvas");
+        let ctx = canvas.getContext("2d");
+
+        let isPlaying = false;
+        let score = 0;
+        let gameLoop;
+
+        // ตัวละคร Chibi Catgirl
+        let player = { x: 50, y: 130, width: 36, height: 40, dy: 0, gravity: 0.55, jumpForce: -10.5, isGrounded: false };
+        // สิ่งกีดขวาง Slime น่ารักๆ
+        let obstacle = { x: 400, y: 145, width: 30, height: 25, speed: 4.5 };
+        // เมฆประดับฉาก
+        let clouds = [{ x: 50, y: 30 }, { x: 220, y: 50 }, { x: 340, y: 20 }];
+
+        window.onload = function() {
+            let savedUser = localStorage.getItem("jumper_user_anime");
+            if (savedUser) {
+                currentUser = savedUser;
+                showGameScreen();
+            }
+        };
+
+        function login() {
+            let name = document.getElementById("usernameInput").value.trim();
+            if (name === "") {
+                alert("กรุณากรอกชื่อก่อนน้าา~ 🌸");
+                return;
+            }
+            currentUser = name;
+            localStorage.setItem("jumper_user_anime", currentUser);
+            showGameScreen();
+        }
+
+        function logout() {
+            localStorage.removeItem("jumper_user_anime");
+            location.reload();
+        }
+
+        function showGameScreen() {
+            document.getElementById("loginScreen").classList.add("hidden");
+            document.getElementById("gameScreen").classList.remove("hidden");
+            document.getElementById("displayName").innerText = currentUser;
+            
+            let highScore = localStorage.getItem(`jumper_hs_anime_${currentUser}`) || 0;
+            document.getElementById("highScore").innerText = highScore;
+            
+            loadHistory();
+            drawStaticScene();
+        }
+
+        document.addEventListener("keydown", function(e) {
+            if (e.code === "Space") jump();
+        });
+        canvas.addEventListener("touchstart", function(e) {
+            e.preventDefault();
+            jump();
+        });
+
+        function jump() {
+            if (isPlaying && player.isGrounded) {
+                player.dy = player.jumpForce;
+                player.isGrounded = false;
+            }
+        }
+
+        function startGame() {
+            if (isPlaying) return;
+            
+            isPlaying = true;
+            score = 0;
+            obstacle.x = 400;
+            obstacle.speed = 4.5;
+            player.y = 130;
+            player.dy = 0;
+            document.getElementById("startBtn").innerText = "กำลังลุยเลย~! 🐾";
+            document.getElementById("startBtn").disabled = true;
+
+            gameLoop = setInterval(update, 1000 / 60);
+        }
+
+        function update() {
+            // ฟิสิกส์
+            player.dy += player.gravity;
+            player.y += player.dy;
+
+            if (player.y >= 130) {
+                player.y = 130;
+                player.dy = 0;
+                player.isGrounded = true;
+            }
+
+            // ขยับสิ่งกีดขวาง
+            obstacle.x -= obstacle.speed;
+            if (obstacle.x + obstacle.width < 0) {
+                obstacle.x = 400;
+                score += 10;
+                obstacle.speed += 0.25;
+                document.getElementById("currentScore").innerText = score;
+            }
+
+            // เมฆลอย
+            clouds.forEach(c => {
+                c.x -= 0.5;
+                if (c.x < -40) c.x = 420;
+            });
+
+            // Collision
+            if (
+                player.x + 5 < obstacle.x + obstacle.width &&
+                player.x + player.width - 5 > obstacle.x &&
+                player.y + 5 < obstacle.y + obstacle.height &&
+                player.y + player.height > obstacle.y
+            ) {
+                gameOver();
+            }
+
+            draw();
+        }
+
+        // วาดฉากอนิเมะด้วย Canvas ล้วนๆ
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. วาดเมฆน่ารักๆ
+            ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+            clouds.forEach(c => {
+                ctx.beginPath();
+                ctx.arc(c.x, c.y, 12, 0, Math.PI * 2);
+                ctx.arc(c.x + 10, c.y - 5, 15, 0, Math.PI * 2);
+                ctx.arc(c.x + 22, c.y, 12, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // 2. พื้นดินสีหญ้าพาสเทล
+            ctx.fillStyle = "#7bed9f";
+            ctx.fillRect(0, 170, canvas.width, 30);
+            ctx.fillStyle = "#2ed573";
+            ctx.fillRect(0, 170, canvas.width, 4); // ขอบหญ้า
+
+            // 3. วาดสิ่งกีดขวาง: Cute Slime (สไลม์ส้ม)
+            let sx = obstacle.x, sy = obstacle.y;
+            ctx.fillStyle = "#ff7f50"; // ตัวสไลม์
+            ctx.beginPath();
+            ctx.arc(sx + 15, sy + 15, 13, Math.PI, 0, false);
+            ctx.fillRect(sx + 2, sy + 14, 26, 10);
+            ctx.fill();
+
+            // ตาสไลม์
+            ctx.fillStyle = "#2f3542";
+            ctx.beginPath();
+            ctx.arc(sx + 9, sy + 12, 2, 0, Math.PI * 2);
+            ctx.arc(sx + 21, sy + 12, 2, 0, Math.PI * 2);
+            ctx.fill();
+            // ปากสไลม์ยิ้ม
+            ctx.strokeStyle = "#2f3542";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(sx + 15, sy + 14, 4, 0, Math.PI, false);
+            ctx.stroke();
+
+            // 4. วาดตัวละคร: Chibi Catgirl
+            let px = player.x, py = player.y;
+
+            // หูแมว 2 ข้าง
+            ctx.fillStyle = "#ff4757";
+            ctx.beginPath();
+            ctx.moveTo(px + 4, py + 10); ctx.lineTo(px + 10, py - 4); ctx.lineTo(px + 16, py + 6); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(px + 20, py + 6); ctx.lineTo(px + 26, py - 4); ctx.lineTo(px + 32, py + 10); ctx.fill();
+
+            // ชุด/ลำตัว
+            ctx.fillStyle = "#ff6b81";
+            ctx.fillRect(px + 8, py + 22, 20, 14);
+
+            // ใบหน้า
+            ctx.fillStyle = "#ffeaa7";
+            ctx.beginPath();
+            ctx.arc(px + 18, py + 15, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ตาอนิเมะโตๆ
+            ctx.fillStyle = "#2f3542";
+            ctx.beginPath();
+            ctx.arc(px + 13, py + 14, 3, 0, Math.PI * 2);
+            ctx.arc(px + 23, py + 14, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // ประกายตา
+            ctx.fillStyle = "#ffffff";
+            ctx.beginPath();
+            ctx.arc(px + 12, py + 13, 1, 0, Math.PI * 2);
+            ctx.arc(px + 22, py + 13, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // แก้มชมพู (Blush)
+            ctx.fillStyle = "rgba(255, 107, 129, 0.5)";
+            ctx.beginPath();
+            ctx.arc(px + 10, py + 17, 2.5, 0, Math.PI * 2);
+            ctx.arc(px + 26, py + 17, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // ขาสองข้าง
+            ctx.fillStyle = "#2f3542";
+            ctx.fillRect(px + 11, py + 34, 4, 6);
+            ctx.fillRect(px + 21, py + 34, 4, 6);
+        }
+
+        function drawStaticScene() {
+            draw();
+        }
+
+        function gameOver() {
+            clearInterval(gameLoop);
+            isPlaying = false;
+            
+            document.getElementById("startBtn").innerText = "แก้มืออีกรอบนะ! 💖";
+            document.getElementById("startBtn").disabled = false;
+
+            let oldHighScore = localStorage.getItem(`jumper_hs_anime_${currentUser}`) || 0;
+            if (score > oldHighScore) {
+                localStorage.setItem(`jumper_hs_anime_${currentUser}`, score);
+                document.getElementById("highScore").innerText = score;
+                alert(`🎉 เก่งมากเลยค่ะ! ทำสถิติใหม่สำเร็จ: ${score} คะแนน 👑`);
+            } else {
+                alert(`สู้ๆ น้าา โดนสไลม์ชนซะแล้ว~ ได้ไป ${score} คะแนน 🌸`);
+            }
+
+            saveHistory(score);
+        }
+
+        function saveHistory(currentScore) {
+            let historyKey = `jumper_his_anime_${currentUser}`;
+            let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+            
+            let timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            history.unshift({ time: timeStr, score: currentScore });
+            
+            if (history.length > 5) history.pop();
+
+            localStorage.setItem(historyKey, JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            let historyKey = `jumper_his_anime_${currentUser}`;
+            let history = JSON.parse(localStorage.getItem(historyKey)) || [];
+            let tbody = document.getElementById("historyList");
+            tbody.innerHTML = "";
+
+            if (history.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3">ยังไม่มีสถิติ ยอดนักกระโดด 🌸</td></tr>`;
+                return;
+            }
+
+            history.forEach((item, index) => {
+                let row = `<tr>
+                    <td>${history.length - index}</td>
+                    <td>${item.time}</td>
+                    <td><b>${item.score}</b></td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+    </script>
+</body>
+</html>
