@@ -1,0 +1,1261 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Floppy Bird — PSRU Workshop Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&amp;display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <style>
+        :root {
+            --bg: #020617;
+            --primary: #00f2ff;
+            --accent: #7000ff;
+            --secondary: #10b981;
+            --text: #f8fafc;
+            --muted: #64748b;
+            --panel: rgba(15, 23, 42, 0.9);
+            --border: rgba(0, 242, 255, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image:
+                radial-gradient(circle at 15% 25%, rgba(112, 0, 255, 0.07) 0%, transparent 40%),
+                radial-gradient(circle at 85% 75%, rgba(0, 242, 255, 0.06) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(transparent, var(--primary), transparent);
+            opacity: 0.07;
+            z-index: 200;
+            pointer-events: none;
+            animation: scan 9s linear infinite;
+        }
+
+        @keyframes scan {
+            0% {
+                top: -2%;
+            }
+
+            100% {
+                top: 102%;
+            }
+        }
+
+        /* ===== SCREENS ===== */
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            padding: 24px;
+            transition: opacity 0.4s ease;
+        }
+
+        .screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* logo */
+        .logo {
+            font-size: 2.8rem;
+            font-weight: 900;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+        }
+
+        .logo-sub {
+            font-size: 0.7rem;
+            letter-spacing: 4px;
+            color: var(--muted);
+            text-transform: uppercase;
+            text-align: center;
+            margin-top: -16px;
+        }
+
+        /* Name panel */
+        .glass-panel {
+            background: var(--panel);
+            backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 36px;
+            width: 360px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 242, 255, 0.03);
+        }
+
+        .glass-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 28px;
+            height: 28px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+            border-radius: 28px 0 0 0;
+        }
+
+        .glass-panel::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 28px;
+            height: 28px;
+            border-bottom: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+            border-radius: 0 0 28px 0;
+        }
+
+        .field-label {
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .name-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 14px 18px;
+            color: var(--text);
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .name-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.15);
+        }
+
+        .name-input::placeholder {
+            color: var(--muted);
+        }
+
+        .btn {
+            width: 100%;
+            border: none;
+            border-radius: 100px;
+            padding: 14px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #0070ff);
+            color: var(--bg);
+            box-shadow: 0 0 25px rgba(0, 242, 255, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(0, 242, 255, 0.4);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--muted);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 8px;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--border);
+            color: var(--primary);
+        }
+
+        /* ===== GAME SCREEN ===== */
+        #screen-game {
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 28px;
+        }
+
+        #game-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .game-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 360px;
+        }
+
+        .player-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .player-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--secondary);
+            box-shadow: 0 0 10px var(--secondary);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+
+        .player-name-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: 1px;
+        }
+
+        .score-box {
+            text-align: right;
+        }
+
+        .score-lbl {
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .score-num {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--primary);
+            line-height: 1;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+        }
+
+        .canvas-wrap {
+            position: relative;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.08), inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .canvas-wrap::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 22px;
+            height: 22px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+            border-radius: 20px 0 0 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .canvas-wrap::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 22px;
+            height: 22px;
+            border-bottom: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+            border-radius: 0 0 20px 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .hint-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 360px;
+        }
+
+        .hint-text {
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: pulse-opacity 2s infinite;
+        }
+
+        @keyframes pulse-opacity {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .diff-bar {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .diff-lbl {
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            margin-right: 2px;
+        }
+
+        .pip {
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            background: rgba(255, 255, 255, 0.08);
+            transition: all 0.3s;
+        }
+
+        .pip.on {
+            background: var(--primary);
+            box-shadow: 0 0 6px var(--primary);
+        }
+
+        .pip.on.mid {
+            background: #ffd700;
+            box-shadow: 0 0 6px #ffd700;
+        }
+
+        .pip.on.hot {
+            background: #f43f5e;
+            box-shadow: 0 0 6px #f43f5e;
+        }
+
+        /* ===== LEADERBOARD PANEL ===== */
+        .lb-panel {
+            background: var(--panel);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px;
+            width: 250px;
+            min-height: 420px;
+            position: relative;
+        }
+
+        .lb-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 18px;
+            height: 18px;
+            border-top: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+            border-radius: 24px 0 0 0;
+        }
+
+        .lb-title {
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .lb-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .lb-rank {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--muted);
+            width: 22px;
+            text-align: center;
+        }
+
+        .lb-rank.g {
+            color: #ffd700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+        }
+
+        .lb-rank.s {
+            color: #c0c0c0;
+        }
+
+        .lb-rank.b {
+            color: #cd7f32;
+        }
+
+        .lb-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lb-name {
+            font-size: 0.82rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lb-bar {
+            height: 2px;
+            background: linear-gradient(to right, var(--primary), var(--accent));
+            border-radius: 2px;
+            margin-top: 4px;
+            transition: width 0.5s;
+        }
+
+        .lb-pts {
+            font-size: 0.8rem;
+            font-weight: 900;
+            color: var(--primary);
+        }
+
+        .lb-none {
+            color: var(--muted);
+            font-size: 0.78rem;
+            text-align: center;
+            padding: 16px;
+            letter-spacing: 1px;
+        }
+
+        .mqtt-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .mqtt-pip {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--muted);
+            transition: all 0.3s;
+        }
+
+        .mqtt-pip.live {
+            background: var(--secondary);
+            box-shadow: 0 0 8px var(--secondary);
+            animation: blink 2s infinite;
+        }
+
+        /* ===== RESULT SCREEN ===== */
+        .result-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .result-name {
+            font-size: 0.7rem;
+            color: var(--primary);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .result-score {
+            font-size: 5.5rem;
+            font-weight: 900;
+            line-height: 1;
+            color: var(--primary);
+            text-shadow: 0 0 40px rgba(0, 242, 255, 0.6);
+        }
+
+        .result-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .result-rank {
+            font-size: 1rem;
+            color: var(--text);
+            font-weight: 700;
+            margin-top: 8px;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            width: 360px;
+        }
+
+        .btn-row .btn {
+            width: auto;
+            flex: 1;
+        }
+
+        /* ===== MOBILE RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem 0.5rem;
+                align-items: flex-start;
+                justify-content: flex-start;
+                overflow-y: auto;
+            }
+
+            #screen-game {
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+                gap: 16px;
+                padding: 12px 8px;
+                overflow-y: auto;
+            }
+
+            .game-top-bar,
+            .hint-row {
+                width: 100%;
+                max-width: 360px;
+            }
+
+            .glass-panel {
+                width: 90vw;
+                max-width: 360px;
+                padding: 24px;
+            }
+
+            .logo {
+                font-size: 2rem;
+            }
+
+            .lb-panel {
+                width: 100%;
+                max-width: 360px;
+                min-height: auto;
+                padding: 16px;
+            }
+
+            .btn-row {
+                width: 90vw;
+                max-width: 360px;
+            }
+
+            .result-score {
+                font-size: 4rem;
+            }
+
+            .score-num {
+                font-size: 1.8rem;
+            }
+
+            #screen-result {
+                overflow-y: auto;
+                justify-content: flex-start;
+                padding-top: 40px;
+            }
+
+            #screen-result .glass-panel {
+                width: 90vw;
+                max-width: 360px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .logo {
+                font-size: 1.6rem;
+                letter-spacing: 3px;
+            }
+
+            .glass-panel {
+                padding: 20px;
+                border-radius: 20px;
+            }
+        }
+
+        /* Full-screen touch area for mobile */
+        .touch-overlay {
+            display: none;
+        }
+
+        @media (pointer: coarse) {
+            .touch-overlay {
+                display: block;
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                touch-action: manipulation;
+            }
+
+            .touch-overlay.inactive {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scan-line"></div>
+    <div class="touch-overlay inactive" id="touch-overlay"></div>
+
+    <!-- ===== SCREEN 1: Name Entry ===== -->
+    <div class="screen" id="screen-name">
+        <div class="logo">Floppy Bird</div>
+        <div class="logo-sub">PSRU Workshop Game · MQTT Live</div>
+
+        <div class="glass-panel">
+            <div class="field-label">Your Bird Name</div>
+            <input type="text" class="name-input" id="name-input" placeholder="BirdPlayer" maxlength="24" autocomplete="off">
+            <button class="btn btn-primary" id="btn-play">▶ START GAME</button>
+        </div>
+
+        <div style="font-size:0.65rem;color:var(--muted);letter-spacing:2px;">SPACEBAR / TAP TO FLAP</div>
+    </div>
+
+    <!-- ===== SCREEN 2: Game ===== -->
+    <div class="screen hidden" id="screen-game">
+        <div id="game-col">
+            <div class="game-top-bar">
+                <div class="player-tag">
+                    <div class="player-dot"></div>
+                    <div class="player-name-label" id="playing-name">Aom</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-lbl">Score</div>
+                    <div class="score-num" id="score-display">0</div>
+                </div>
+            </div>
+
+            <div class="canvas-wrap">
+                <canvas id="gameCanvas" width="360" height="520" style="width: 360px; height: 520px;"></canvas>
+                <!-- Full-canvas tap area for mobile -->
+            </div>
+
+            <div class="hint-row">
+                <div class="hint-text">SPACEBAR / TAP TO FLAP</div>
+                <div class="diff-bar">
+                    <span class="diff-lbl">SPEED</span>
+                    <div id="pips">
+                        <div class="pip on"></div>
+                        <div class="pip"></div>
+                        <div class="pip"></div>
+                        <div class="pip"></div>
+                        <div class="pip"></div>
+                        <div class="pip"></div>
+                        <div class="pip"></div>
+                        <div class="pip"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Leaderboard -->
+        <div class="lb-panel">
+            <div class="lb-title">🏆 Live Leaderboard</div>
+            <div id="lb-list"><div class="lb-none">No scores yet</div></div>
+            <div class="mqtt-row">
+                <div class="mqtt-pip live" id="mqtt-pip"></div>
+                <span id="mqtt-label">MQTT LIVE</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 3: Results ===== -->
+    <div class="screen hidden" id="screen-result">
+        <div class="result-wrap">
+            <div class="result-name" id="res-name">Aom</div>
+            <div class="result-score" id="res-score">0</div>
+            <div class="result-label">BIRDS CLEARED</div>
+            <div class="result-rank" id="res-rank">#1 จาก 1 คน</div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-primary" id="btn-again">▶ Play Again</button>
+            <button class="btn btn-ghost" id="btn-exit">Exit</button>
+        </div>
+
+        <!-- Mini leaderboard in result -->
+        <div class="glass-panel" style="width:360px;padding:20px 24px;">
+            <div class="lb-title" style="margin-bottom:10px;">🏆 Top Scores</div>
+            <div id="lb-result-list"><div class="lb-row" style="background:rgba(0,242,255,0.06);border-radius:8px;padding:6px 8px">
+                <div class="lb-rank g">🥇</div>
+                <div class="lb-info">
+                    <div class="lb-name" style="color:var(--primary)">BirdPlayer ◀</div>
+                    <div class="lb-bar" style="width:100%"></div>
+                </div>
+                <div class="lb-pts">0</div>
+            </div></div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================
+        //  STATE — FLOPPY BIRD
+        // ================================================
+        let playerName = '';
+        let score = 0;
+        let gameRunning = false;
+        let animFrame = null;
+        let diffLevel = 1;
+
+        // ================================================
+        //  CANVAS / GAME
+        // ================================================
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const touchOverlay = document.getElementById('touch-overlay');
+
+        function resizeCanvas() {
+            const maxW = Math.min(360, window.innerWidth - 32);
+            const ratio = maxW / 360;
+            canvas.width = maxW;
+            canvas.height = Math.round(520 * ratio);
+            canvas.style.width = maxW + 'px';
+            canvas.style.height = canvas.height + 'px';
+            updateGameConstants();
+        }
+
+        let W = canvas.width, H = canvas.height;
+        let groundY, bird, pipes, lastPipeTime, gameTime;
+
+        function updateGameConstants() {
+            W = canvas.width;
+            H = canvas.height;
+            groundY = H - Math.round(34 * (W / 360));
+        }
+
+        function getPipeGap() {
+            return Math.max(112, 150 - (diffLevel - 1) * 7);
+        }
+
+        function getPipeSpeed() {
+            return 2.15 + (diffLevel - 1) * 0.18;
+        }
+
+        function initGame() {
+            score = 0;
+            diffLevel = 1;
+            gameTime = 0;
+            lastPipeTime = 0;
+
+            bird = {
+                x: W * 0.28,
+                y: H * 0.45,
+                vy: 0,
+                r: Math.max(11, W * 0.036),
+                rotation: 0
+            };
+
+            pipes = [];
+            spawnPipe(W + 40);
+            spawnPipe(W + 250);
+
+            updateScore();
+            updatePips();
+            draw();
+        }
+
+        function spawnPipe(x) {
+            const gap = getPipeGap();
+            const minTop = 55;
+            const maxTop = Math.max(minTop + 20, groundY - gap - 65);
+            const top = minTop + Math.random() * (maxTop - minTop);
+
+            pipes.push({
+                x,
+                width: Math.max(46, W * 0.14),
+                top,
+                gap,
+                passed: false
+            });
+        }
+
+        function flap() {
+            if (!gameRunning) return;
+            bird.vy = -6.0 * (W / 360);
+        }
+
+        function updateScore() {
+            document.getElementById('score-display').textContent = score;
+        }
+
+        function updatePips() {
+            const pips = document.querySelectorAll('#pips .pip');
+            const level = Math.min(diffLevel, 8);
+            pips.forEach((p, i) => {
+                p.className = 'pip';
+                if (i < level) {
+                    p.classList.add('on');
+                    if (i >= 5) p.classList.add('hot');
+                    else if (i >= 3) p.classList.add('mid');
+                }
+            });
+        }
+
+        function update() {
+            gameTime += 1;
+            bird.vy += 0.31 * (W / 360);
+            bird.y += bird.vy;
+            bird.rotation = Math.max(-0.55, Math.min(1.15, bird.vy * 0.09));
+
+            const speed = getPipeSpeed() * (W / 360);
+
+            for (const p of pipes) {
+                p.x -= speed;
+
+                if (!p.passed && p.x + p.width < bird.x) {
+                    p.passed = true;
+                    score++;
+                    diffLevel = Math.floor(score / 5) + 1;
+                    updateScore();
+                    updatePips();
+                }
+            }
+
+            if (pipes.length && pipes[0].x + pipes[0].width < -10) {
+                pipes.shift();
+            }
+
+            const spacing = Math.max(180, 235 - (diffLevel - 1) * 5);
+            const last = pipes[pipes.length - 1];
+            if (last && last.x < W - spacing) {
+                spawnPipe(W + 15);
+            }
+
+            if (bird.y - bird.r < 0 || bird.y + bird.r > groundY) {
+                endGame();
+                return;
+            }
+
+            for (const p of pipes) {
+                const hitX = bird.x + bird.r > p.x && bird.x - bird.r < p.x + p.width;
+                const hitY = bird.y - bird.r < p.top ||
+                             bird.y + bird.r > p.top + p.gap;
+                if (hitX && hitY) {
+                    endGame();
+                    return;
+                }
+            }
+        }
+
+        function drawBackground() {
+            const bg = ctx.createLinearGradient(0, 0, 0, H);
+            bg.addColorStop(0, '#07152d');
+            bg.addColorStop(0.65, '#0b3151');
+            bg.addColorStop(1, '#0a1624');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            // Soft sky glow
+            const glow = ctx.createRadialGradient(W * 0.72, H * 0.18, 5, W * 0.72, H * 0.18, W * 0.8);
+            glow.addColorStop(0, 'rgba(0,242,255,0.13)');
+            glow.addColorStop(1, 'rgba(0,242,255,0)');
+            ctx.fillStyle = glow;
+            ctx.fillRect(0, 0, W, H);
+
+            // Clouds / decorative particles
+            ctx.fillStyle = 'rgba(255,255,255,0.07)';
+            for (let i = 0; i < 6; i++) {
+                const x = ((i * 97 - gameTime * 0.25) % (W + 100)) - 50;
+                const y = 70 + (i % 3) * 62;
+                ctx.beginPath();
+                ctx.arc(x, y, 18, 0, Math.PI * 2);
+                ctx.arc(x + 22, y + 4, 13, 0, Math.PI * 2);
+                ctx.arc(x - 20, y + 5, 12, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawPipe(p) {
+            const cap = Math.max(7, W * 0.025);
+            const bottomY = p.top + p.gap;
+
+            const grad = ctx.createLinearGradient(p.x, 0, p.x + p.width, 0);
+            grad.addColorStop(0, '#00a884');
+            grad.addColorStop(0.5, '#10b981');
+            grad.addColorStop(1, '#057a62');
+
+            ctx.fillStyle = grad;
+            ctx.fillRect(p.x, 0, p.width, p.top);
+            ctx.fillRect(p.x, bottomY, p.width, groundY - bottomY);
+
+            ctx.fillStyle = '#12d6a0';
+            ctx.fillRect(p.x - cap, p.top - cap, p.width + cap * 2, cap);
+            ctx.fillRect(p.x - cap, bottomY, p.width + cap * 2, cap);
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(p.x, 0, p.width, p.top);
+            ctx.strokeRect(p.x, bottomY, p.width, groundY - bottomY);
+        }
+
+        function drawBird() {
+            ctx.save();
+            ctx.translate(bird.x, bird.y);
+            ctx.rotate(bird.rotation);
+
+            // Glow
+            ctx.shadowColor = '#00f2ff';
+            ctx.shadowBlur = 15;
+
+            // Body
+            const body = ctx.createLinearGradient(-bird.r, -bird.r, bird.r, bird.r);
+            body.addColorStop(0, '#fff176');
+            body.addColorStop(0.65, '#ffd23f');
+            body.addColorStop(1, '#ff9f1c');
+
+            ctx.fillStyle = body;
+            ctx.beginPath();
+            ctx.arc(0, 0, bird.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Wing
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath();
+            ctx.ellipse(-bird.r * 0.25, bird.r * 0.25, bird.r * 0.65, bird.r * 0.35,
+                        Math.sin(gameTime * 0.25) * 0.18, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(bird.r * 0.35, -bird.r * 0.35, bird.r * 0.36, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#111827';
+            ctx.beginPath();
+            ctx.arc(bird.r * 0.48, -bird.r * 0.35, bird.r * 0.16, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Beak
+            ctx.fillStyle = '#f97316';
+            ctx.beginPath();
+            ctx.moveTo(bird.r * 0.78, -bird.r * 0.02);
+            ctx.lineTo(bird.r * 1.45, bird.r * 0.18);
+            ctx.lineTo(bird.r * 0.75, bird.r * 0.38);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawGround() {
+            ctx.fillStyle = '#172033';
+            ctx.fillRect(0, groundY, W, H - groundY);
+
+            ctx.strokeStyle = 'rgba(0,242,255,0.65)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, groundY);
+            ctx.lineTo(W, groundY);
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(0,242,255,0.08)';
+            const offset = (gameTime * 2.5) % 24;
+            for (let x = -24 + offset; x < W; x += 24) {
+                ctx.fillRect(x, groundY + 7, 12, 3);
+            }
+        }
+
+        function draw() {
+            drawBackground();
+            for (const p of pipes) drawPipe(p);
+            drawGround();
+            drawBird();
+        }
+
+        function loop() {
+            if (!gameRunning) return;
+            update();
+            draw();
+            if (gameRunning) animFrame = requestAnimationFrame(loop);
+        }
+
+        function endGame() {
+            if (!gameRunning) return;
+            gameRunning = false;
+            cancelAnimationFrame(animFrame);
+            touchOverlay.classList.add('inactive');
+            draw();
+            publishScore();
+            showResult();
+        }
+
+        // ================================================
+        //  SCREENS
+        // ================================================
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function showResult() {
+            document.getElementById('res-name').textContent = playerName;
+            document.getElementById('res-score').textContent = score;
+
+            // Rank
+            const entries = getSortedScores();
+            const rank = entries.findIndex(e => e.name === playerName) + 1;
+            const total = entries.length;
+            document.getElementById('res-rank').textContent =
+                rank > 0 ? `#${rank} จาก ${total} คน` : '';
+
+            renderLbResult(entries);
+            showScreen('screen-result');
+        }
+
+        // ================================================
+        //  MQTT LEADERBOARD
+        // ================================================
+        const BROKER = 'wss://dustboy-wss-bridge.laris.workers.dev/mqtt';
+        const TOPIC_PUB_BASE = 'floppy-bird/scores/';
+        const TOPIC_SUB = 'floppy-bird/scores/#';
+
+        let mqttClient = null;
+        let scores = {}; // name -> {score, date}
+
+        function connectMQTT() {
+            const cid = 'oracle-stack-' + Math.random().toString(36).slice(2, 8);
+            mqttClient = mqtt.connect(BROKER, { clientId: cid, clean: true, reconnectPeriod: 4000 });
+            mqttClient.on('connect', () => {
+                setMqttStatus(true, 'MQTT LIVE');
+                mqttClient.subscribe(TOPIC_SUB, { qos: 1 });
+            });
+            mqttClient.on('message', (_, payload) => {
+                try {
+                    const d = JSON.parse(payload.toString());
+                    if (d.name && typeof d.score === 'number') {
+                        if (!scores[d.name] || d.score > scores[d.name].score) {
+                            scores[d.name] = { score: d.score, date: d.date || '' };
+                            renderLb();
+                        }
+                    }
+                } catch (e) { }
+            });
+            mqttClient.on('error', () => setMqttStatus(false, 'ERROR'));
+            mqttClient.on('offline', () => setMqttStatus(false, 'OFFLINE'));
+        }
+
+        function setMqttStatus(on, text) {
+            const pip = document.getElementById('mqtt-pip');
+            pip.className = 'mqtt-pip' + (on ? ' live' : '');
+            document.getElementById('mqtt-label').textContent = text;
+        }
+
+        function publishScore() {
+            if (!playerName || score === 0) return;
+            const existing = scores[playerName];
+            if (existing && score <= existing.score) return; // don't publish lower score
+
+            const payload = JSON.stringify({ name: playerName, score, date: new Date().toISOString().slice(0, 10) });
+            const topic = TOPIC_PUB_BASE + playerName.replace(/\s+/g, '_');
+
+            if (mqttClient && mqttClient.connected) {
+                mqttClient.publish(topic, payload, { retain: true, qos: 1 });
+            }
+            // Update local state immediately
+            scores[playerName] = { score, date: '' };
+        }
+
+        function getSortedScores() {
+            return Object.entries(scores)
+                .map(([name, d]) => ({ name, ...d }))
+                .sort((a, b) => b.score - a.score);
+        }
+
+        function renderLb() {
+            const list = document.getElementById('lb-list');
+            const entries = getSortedScores().slice(0, 10);
+            if (!entries.length) { list.innerHTML = '<div class="lb-none">No scores yet</div>'; return; }
+            const max = entries[0].score || 1;
+            const r = (i) => ['🥇', '🥈', '🥉'][i] || `${i + 1}`;
+            const rc = (i) => ['g', 's', 'b'][i] || '';
+            list.innerHTML = entries.map((e, i) => `
+            <div class="lb-row">
+                <div class="lb-rank ${rc(i)}">${r(i)}</div>
+                <div class="lb-info">
+                    <div class="lb-name">${e.name}</div>
+                    <div class="lb-bar" style="width:${Math.round(e.score / max * 100)}%"></div>
+                </div>
+                <div class="lb-pts">${e.score}</div>
+            </div>`).join('');
+        }
+
+        function renderLbResult(entries) {
+            const list = document.getElementById('lb-result-list');
+            if (!entries.length) { list.innerHTML = '<div class="lb-none">No scores</div>'; return; }
+            const max = entries[0].score || 1;
+            const r = (i) => ['🥇', '🥈', '🥉'][i] || `${i + 1}`;
+            const rc = (i) => ['g', 's', 'b'][i] || '';
+            list.innerHTML = entries.slice(0, 5).map((e, i) => {
+                const isMe = e.name === playerName;
+                return `<div class="lb-row" style="${isMe ? 'background:rgba(0,242,255,0.06);border-radius:8px;padding:6px 8px' : ''}">
+                <div class="lb-rank ${rc(i)}">${r(i)}</div>
+                <div class="lb-info">
+                    <div class="lb-name" style="${isMe ? 'color:var(--primary)' : ''}">${e.name}${isMe ? ' ◀' : ''}</div>
+                    <div class="lb-bar" style="width:${Math.round(e.score / max * 100)}%"></div>
+                </div>
+                <div class="lb-pts">${e.score}</div>
+            </div>`;
+            }).join('');
+        }
+
+        // ================================================
+        //  EVENTS
+        // ================================================
+        document.getElementById('btn-play').addEventListener('click', () => {
+            const name = document.getElementById('name-input').value.trim();
+            if (!name) { document.getElementById('name-input').focus(); return; }
+            playerName = name;
+            document.getElementById('playing-name').textContent = name;
+            showScreen('screen-game');
+            touchOverlay.classList.remove('inactive');
+            gameRunning = true;
+            resizeCanvas();
+            updateGameConstants();
+            initGame();
+            loop();
+        });
+
+        document.getElementById('name-input').addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('btn-play').click();
+        });
+
+        document.getElementById('btn-again').addEventListener('click', () => {
+            showScreen('screen-game');
+            touchOverlay.classList.remove('inactive');
+            gameRunning = true;
+            resizeCanvas();
+            updateGameConstants();
+            initGame();
+            loop();
+        });
+
+        document.getElementById('btn-exit').addEventListener('click', () => {
+            showScreen('screen-name');
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.code === 'Space') { e.preventDefault(); flap(); }
+        });
+
+        // Desktop: click on canvas
+        canvas.addEventListener('click', drop);
+
+        // Mobile: full-screen touch overlay
+        touchOverlay.addEventListener('touchstart', e => { e.preventDefault(); flap(); }, { passive: false });
+        touchOverlay.addEventListener('click', drop);
+
+        // Also keep canvas touch for fallback
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); flap(); }, { passive: false });
+
+        // Prevent zoom on double-tap
+        document.addEventListener('touchend', e => {
+            if (gameRunning) e.preventDefault();
+        }, { passive: false });
+
+        // ================================================
+        //  INIT
+        // ================================================
+        connectMQTT();
+        renderLb();
+        showScreen('screen-name');
+    </script>
+
+
+<audio class="audio-output" style="display: none;"></audio><div id="volume-booster-visusalizer">
+                    <div class="sound">
+                        <div class="sound-icon"></div>
+                        <div class="sound-wave sound-wave_one"></div>
+                        <div class="sound-wave sound-wave_two"></div>
+                        <div class="sound-wave sound-wave_three"></div>
+                    </div>
+                    <div class="segments-box">
+                        <div data-range="1-20" class="segment"><span></span></div>
+                        <div data-range="21-40" class="segment"><span></span></div>
+                        <div data-range="41-60" class="segment"><span></span></div>
+                        <div data-range="61-80" class="segment"><span></span></div>
+                        <div data-range="81-100" class="segment"><span></span></div>
+                    </div>
+                </div></body></html>

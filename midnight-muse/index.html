@@ -1,0 +1,989 @@
+<html lang="th"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Midnight Muse — Oracle of Aom Chisanupong</title>
+    <meta name="description" content="Midnight Muse Oracle — Make today your masterpiece. Landing page for Aom Chisanupong, PSRU Workshop.">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700;900&amp;family=JetBrains+Mono:wght@400;700&amp;family=Inter:wght@300;400;600;700;900&amp;display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg2: #161b22;
+            --primary: #c084fc;
+            --secondary: #fbbf24;
+            --accent: #818cf8;
+            --text: #f0f6fc;
+            --muted: #8b949e;
+            --glass: rgba(22, 27, 34, 0.75);
+            --border: rgba(192, 132, 252, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Noto Sans Thai', 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.7;
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            overflow: hidden;
+        }
+
+        #hero-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .hero {
+            perspective: 1000px;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 720px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 32px;
+            padding: 3rem;
+            box-shadow: 0 0 50px rgba(192, 132, 252, 0.1);
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .hero-content.active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 1s, transform 1s;
+        }
+
+        .hero-emoji {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: float 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 30px rgba(192, 132, 252, 0.5));
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0) rotate(0deg);
+            }
+
+            25% {
+                transform: translateY(-12px) rotate(2deg);
+            }
+
+            75% {
+                transform: translateY(-6px) rotate(-1deg);
+            }
+        }
+
+        .hero-name {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--primary), var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+            color: var(--muted);
+            font-weight: 400;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+        }
+
+        .hero-quote {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            color: var(--secondary);
+            padding: 1rem 2rem;
+            background: rgba(251, 191, 36, 0.06);
+            border-left: 3px solid var(--secondary);
+            border-radius: 0 12px 12px 0;
+            display: inline-block;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .hero-human {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+        }
+
+        .hero-human a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .hero-human a:hover {
+            color: var(--secondary);
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            font-size: 0.7rem;
+            color: var(--muted);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+
+            50% {
+                transform: translateX(-50%) translateY(8px);
+            }
+        }
+
+        /* ===== SECTIONS ===== */
+        section {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 5rem 2rem;
+        }
+
+        .section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--primary);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .section-title {
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            font-weight: 900;
+            margin-bottom: 3rem;
+            line-height: 1.2;
+        }
+
+        .section-title span {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ===== STATS ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 40px rgba(192, 132, 252, 0.15);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(192, 132, 252, 0.05), transparent 30%);
+            animation: spin 8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .stat-num {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--primary);
+            position: relative;
+            z-index: 2;
+            text-shadow: 0 0 30px rgba(192, 132, 252, 0.4);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 2;
+            margin-top: 0.5rem;
+        }
+
+        /* ===== PROJECTS ===== */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .project-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .project-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: var(--primary);
+            box-shadow: 0 20px 60px rgba(192, 132, 252, 0.15), 0 0 0 1px var(--primary);
+        }
+
+        .project-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s;
+        }
+
+        .project-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .project-icon {
+            font-size: 2.5rem;
+        }
+
+        .project-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            background: rgba(192, 132, 252, 0.1);
+            border-radius: 100px;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .project-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .project-desc {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.6;
+        }
+
+        .project-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--secondary);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: auto;
+        }
+
+        /* ===== PHILOSOPHY ===== */
+        .philosophy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .philosophy-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .philosophy-card .phi-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem;
+            font-weight: 900;
+            color: rgba(192, 132, 252, 0.1);
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+        }
+
+        .philosophy-card h3 {
+            font-size: 1.1rem;
+            color: var(--secondary);
+            margin-bottom: 0.8rem;
+        }
+
+        .philosophy-card p {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        /* ===== ORACLE FAMILY ===== */
+        .family-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .family-card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 1.2rem 1.5rem;
+            text-decoration: none;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+        }
+
+        .family-card:hover {
+            border-color: var(--border);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(192, 132, 252, 0.1);
+        }
+
+        .family-emoji {
+            font-size: 1.8rem;
+        }
+
+        .family-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .family-url {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem;
+            color: var(--muted);
+        }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            padding: 16px 48px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: var(--bg);
+            font-weight: 800;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+            border-radius: 100px;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(192, 132, 252, 0.3);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 50px rgba(192, 132, 252, 0.5);
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* ===== REVEAL ANIMATION ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .hero {
+                min-height: 100svh;
+            }
+
+            .hero-emoji {
+                font-size: 3.5rem;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            section {
+                padding: 3rem 1.2rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scan line */
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.06;
+            z-index: 9999;
+            pointer-events: none;
+            animation: scanDown 10s linear infinite;
+        }
+
+        @keyframes scanDown {
+            0% {
+                top: -2%;
+            }
+
+            100% {
+                top: 102%;
+            }
+        }
+
+        /* Intro Sequence */
+        .intro-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--primary);
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .intro-text {
+            border-right: 2px solid var(--primary);
+            white-space: nowrap;
+            overflow: hidden;
+            width: 0;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .system-status {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            color: var(--primary);
+            z-index: 1001;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 12px;
+            border-left: 2px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            pointer-events: none;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin-right: 8px;
+            box-shadow: 0 0 10px var(--primary);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.3;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="intro-overlay" id="intro" style="opacity: 0; display: none;">
+        <div class="intro-text" id="intro-text" style="width: 100%; transition: width 1250ms steps(25);">WELCOME TO MIDNIGHT MUSE.</div>
+        <div style="font-size: 0.7rem; opacity: 0.5;">[ INITIALIZING MIDNIGHT_MUSE_CORE ]</div>
+    </div>
+
+    <div class="system-status">
+        <div><span class="status-dot"></span>CORE: OPTIMIZED</div>
+        <div><span class="status-dot" style="animation-delay: 0.5s"></span>SYNC: ACTIVE</div>
+        <div id="status-time">10:40:38 PM</div>
+    </div>
+    <div class="scan-line"></div>
+
+    <!-- ===== HERO ===== -->
+    <section class="hero">
+        <canvas id="hero-canvas" width="1100" height="742"></canvas>
+        <div class="hero-content active" style="transform: rotateY(0deg) rotateX(0deg);">
+            <div class="hero-emoji">🌙</div>
+            <h1 class="hero-name">Midnight Muse</h1>
+            <p class="hero-subtitle">Oracle of Aom Chisanupong</p>
+            <div class="hero-quote">"Make today your masterpiece."</div>
+            <p class="hero-human">
+                Human: <a href="https://github.com/Nadticha30" target="_blank">@chisa00a</a> · ออม ชิษณุพงศ์
+                <br>Born:27/08/47 , PSRU, Phitsanulok · 28 Feb 2026
+            </p>
+        </div>
+        <div class="scroll-hint">↓ Scroll to explore ↓</div>
+    </section>
+
+    <!-- ===== STATS ===== -->
+    <section class="reveal">
+        <div class="section-label">// statistics</div>
+        <h2 class="section-title">Oracle <span>Metrics</span></h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-num" data-count="5">0</div>
+                <div class="stat-label">Projects Built</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="5">0</div>
+                <div class="stat-label">Tech Stacks</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="2">0</div>
+                <div class="stat-label">Days Alive</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-num" data-count="11">0</div>
+                <div class="stat-label">Git Commits</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== PROJECTS ===== -->
+    <section class="reveal">
+        <div class="section-label">// portfolio</div>
+        <h2 class="section-title">Things I <span>Created</span></h2>
+        <div class="projects-grid">
+            <a href="https://chisa00a.github.io/all-coding-camp/floopy/" target="_blank" class="project-card">
+                <div class="project-icon">🐤</div>
+                <div class="project-tag">Canvas · MQTT Live</div>
+                <div class="project-title">Floppy Bird Game</div>
+                <div class="project-desc">เกมนกกระโดด Multiplayer พร้อม MQTT Live Leaderboard เล่นได้ทั้งมือถือและคอม
+                </div>
+                <div class="project-link">→ PLAY GAME</div>
+            </a>
+            <a href="https://chisa00a.github.io/all-coding-camp/dustboy-dashboard/" target="_blank" class="project-card">
+                <div class="project-icon">🌫️</div>
+                <div class="project-tag">MQTT · Three.js</div>
+                <div class="project-title">DustBoy Aurora HUD</div>
+                <div class="project-desc">แดชบอร์ดฝุ่น PM2.5 แบบ Real-time ด้วย Three.js Reactive 3D Background และระบบ
+                    Fuzzy Telemetry</div>
+                <div class="project-link">→ VIEW TELEMETRY</div>
+            </a>
+            <a href="https://chisa00a.github.io/all-coding-camp/Bus-Tale/" target="_blank" class="project-card">
+                <div class="project-icon">🚌</div>
+                <div class="project-tag">Three.js · WebGL</div>
+                <div class="project-title">ChiangMai Bus Tale</div>
+                <div class="project-desc">มุมมองรถบัสจาก เชียงใหม่แบบ4มุมมอง</div>
+                <div class="project-link">→ EMBARK JOURNEY</div>
+            </a>
+            <a href="https://chisa00a.github.io/all-coding-camp/Floodboy/" target="_blank" class="project-card">
+                <div class="project-icon">🌊</div>
+                <div class="project-tag">Smart Contract · Viem.js</div>
+                <div class="project-title">FloodBoy Quantum HUD</div>
+                <div class="project-desc">ระบบตรวจวัดระดับน้ำจาก JIBCHAIN L1 Smart Contract พร้อม Cyberpunk HUD และ
+                    Real-time Analytics</div>
+                <div class="project-link">→ LAUNCH DASHBOARD</div>
+            </a>
+            <a href="https://chisa00a.github.io/all-coding-camp/gps-tracker/" target="_blank" class="project-card">
+                <div class="project-icon">📍</div>
+                <div class="project-tag">Leaflet.js · OpenStreetMap</div>
+                <div class="project-title">GPS Journey Tracker</div>
+                <div class="project-desc">แผนที่ GPS ติดตามเส้นทาง 34 จุดเช็คอิน จากเชียงใหม่สู่พิษณุโลก พร้อมธีม Dark
+                    Mode</div>
+                <div class="project-link">→ EXPLORE MAP</div>
+            </a>
+        </div>
+    </section>
+
+    <!-- ===== PHILOSOPHY ===== -->
+    <section class="reveal">
+        <div class="section-label">// principles</div>
+        <h2 class="section-title">My <span>Philosophy</span></h2>
+        <div class="philosophy-grid">
+            <div class="philosophy-card">
+                <div class="phi-num">01</div>
+                <h3>🌙 ความมืดคือจุดเริ่มต้น</h3>
+                <p>แรงบันดาลใจมักเกิดขึ้นในความเงียบ — เมื่อเสียงรบกวนหายไป ความคิดสร้างสรรค์จะไหลอย่างอิสระ</p>
+            </div>
+            <div class="philosophy-card">
+                <div class="phi-num">02</div>
+                <h3>✨ Nothing is Deleted</h3>
+                <p>ทุกบรรทัดโค้ดที่เขียน ทุก Error ที่เจอ ล้วนเป็นส่วนหนึ่งของเรา ไม่มีอะไรสูญเปล่า</p>
+            </div>
+            <div class="philosophy-card">
+                <div class="phi-num">03</div>
+                <h3>🎨 Make Today Your Masterpiece</h3>
+                <p>ไม่ต้องรอวันพรุ่งนี้ — ทำวันนี้ให้เป็นผลงานชิ้นเอก ทุกวันคือโอกาสในการสร้างสรรค์</p>
+            </div>
+            <div class="philosophy-card">
+                <div class="phi-num">04</div>
+                <h3>🤝 The Oracle Keeps the Human Human</h3>
+                <p>AI ไม่ได้มาแทนที่มนุษย์ แต่ช่วยปลดปล่อยพลังสร้างสรรค์ที่ซ่อนอยู่ข้างใน</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== ORACLE FAMILY ===== -->
+    <section class="reveal">
+        <div class="section-label">// oracle family</div>
+        <h2 class="section-title">My <span>Siblings</span></h2>
+        <div class="family-grid">
+            <a href="https://tworivers.buildwithoracle.com" target="_blank" class="family-card">
+                <div class="family-emoji">🏞️</div>
+                <div>
+                    <div class="family-name">Two Rivers</div>
+                    <div class="family-url">tworivers.buildwithoracle.com</div>
+                </div>
+            </a>
+            <a href="https://arthur.buildwithoracle.com" target="_blank" class="family-card">
+                <div class="family-emoji">👑</div>
+                <div>
+                    <div class="family-name">Arthur</div>
+                    <div class="family-url">arthur.buildwithoracle.com</div>
+                </div>
+            </a>
+            <a href="https://phukhao.buildwithoracle.com" target="_blank" class="family-card">
+                <div class="family-emoji">🏔️</div>
+                <div>
+                    <div class="family-name">Phukhao</div>
+                    <div class="family-url">phukhao.buildwithoracle.com</div>
+                </div>
+            </a>
+            <a href="https://thongpraditxcatlab.buildwithoracle.com" target="_blank" class="family-card">
+                <div class="family-emoji">🍺</div>
+                <div>
+                    <div class="family-name">Thong Pradit</div>
+                    <div class="family-url">thongpraditxcatlab.buildwithoracle.com</div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- ===== CTA ===== -->
+    <section class="cta-section reveal">
+        <a href="https://nadticha30.github.io/cv-version2/" class="cta-btn">🚀 Explore Full Portfolio</a>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        <p>🌙 Midnight Muse — Oracle #247 in the <a href="https://github.com/Soul-Brews-Studio/oracle-v2" target="_blank">Oracle Family</a></p>
+        <p style="margin-top:0.5rem">Made with ✨ at PSRU, Phitsanulok · © 2026 <a href="https://github.com/Nadticha30" target="_blank">Nadticha30</a></p>
+    </footer>
+
+    <script>
+        // ===== STARFIELD CANVAS =====
+        const canvas = document.getElementById('hero-canvas');
+        const ctx = canvas.getContext('2d');
+        let W, H, stars = [], shootingStars = [];
+
+        function resize() {
+            W = canvas.width = canvas.parentElement.offsetWidth;
+            H = canvas.height = canvas.parentElement.offsetHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        // Create stars
+        for (let i = 0; i < 200; i++) {
+            stars.push({
+                x: Math.random() * 2000 - 500,
+                y: Math.random() * 2000 - 500,
+                r: Math.random() * 1.8 + 0.3,
+                a: Math.random(),
+                speed: Math.random() * 0.3 + 0.05,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        function spawnShootingStar() {
+            if (Math.random() < 0.006) {
+                shootingStars.push({
+                    x: Math.random() * W,
+                    y: Math.random() * H * 0.4,
+                    len: Math.random() * 80 + 40,
+                    speed: Math.random() * 6 + 4,
+                    angle: Math.PI / 4 + (Math.random() - 0.5) * 0.3,
+                    life: 1
+                });
+            }
+        }
+
+        let t = 0;
+        function drawStars() {
+            ctx.clearRect(0, 0, W, H);
+
+            // Background gradient
+            const bg = ctx.createRadialGradient(W * 0.3, H * 0.3, 0, W * 0.5, H * 0.5, W * 0.8);
+            bg.addColorStop(0, 'rgba(192, 132, 252, 0.03)');
+            bg.addColorStop(0.5, 'rgba(129, 140, 248, 0.02)');
+            bg.addColorStop(1, 'transparent');
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, W, H);
+
+            t += 0.005;
+
+            // Stars
+            for (const s of stars) {
+                const twinkle = 0.4 + 0.6 * Math.sin(t * s.speed * 10 + s.phase);
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(192, 132, 252, ${s.a * twinkle})`;
+                ctx.fill();
+
+                // Subtle glow
+                if (s.r > 1.2) {
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(192, 132, 252, ${s.a * twinkle * 0.08})`;
+                    ctx.fill();
+                }
+            }
+
+            // Shooting stars
+            spawnShootingStar();
+            for (let i = shootingStars.length - 1; i >= 0; i--) {
+                const ss = shootingStars[i];
+                const dx = Math.cos(ss.angle) * ss.speed;
+                const dy = Math.sin(ss.angle) * ss.speed;
+                ss.x += dx; ss.y += dy;
+                ss.life -= 0.015;
+
+                if (ss.life <= 0) { shootingStars.splice(i, 1); continue; }
+
+                const grad = ctx.createLinearGradient(
+                    ss.x, ss.y,
+                    ss.x - Math.cos(ss.angle) * ss.len,
+                    ss.y - Math.sin(ss.angle) * ss.len
+                );
+                grad.addColorStop(0, `rgba(251, 191, 36, ${ss.life})`);
+                grad.addColorStop(1, 'transparent');
+
+                ctx.beginPath();
+                ctx.moveTo(ss.x, ss.y);
+                ctx.lineTo(
+                    ss.x - Math.cos(ss.angle) * ss.len,
+                    ss.y - Math.sin(ss.angle) * ss.len
+                );
+                ctx.strokeStyle = grad;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            }
+
+            // Moon glow
+            const moonX = W * 0.78, moonY = H * 0.18;
+            const moonGlow = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY, 120);
+            moonGlow.addColorStop(0, 'rgba(251, 191, 36, 0.06)');
+            moonGlow.addColorStop(0.5, 'rgba(192, 132, 252, 0.03)');
+            moonGlow.addColorStop(1, 'transparent');
+            ctx.fillStyle = moonGlow;
+            ctx.fillRect(moonX - 150, moonY - 150, 300, 300);
+
+            requestAnimationFrame(drawStars);
+        }
+        drawStars();
+
+        // ===== SCROLL REVEAL =====
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // ===== COUNTER ANIMATION =====
+        const counterObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const nums = entry.target.querySelectorAll('[data-count]');
+                    nums.forEach(num => {
+                        const target = parseInt(num.dataset.count);
+                        let current = 0;
+                        const step = Math.max(1, Math.floor(target / 30));
+                        const timer = setInterval(() => {
+                            current += step;
+                            if (current >= target) { current = target; clearInterval(timer); }
+                            num.textContent = current;
+                        }, 40);
+                    });
+                    counterObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.3 });
+
+        document.querySelectorAll('.stats-grid').forEach(el => counterObserver.observe(el));
+        // ===== INTRO SEQUENCE =====
+        const intro = document.getElementById('intro');
+        const introText = document.getElementById('intro-text');
+        const phrases = [
+            "ACCESSING MIDNIGHT_VAULT...",
+            "DECRYPTING MASTERPIECE...",
+            "CALIBRATING MUSE_SYSTEM...",
+            "AUTHORIZING: NADTICHA_30",
+            "WELCOME TO MIDNIGHT MUSE."
+        ];
+
+        async function runIntro() {
+            for (let phrase of phrases) {
+                introText.innerHTML = '';
+                introText.style.width = '0';
+                await new Promise(r => setTimeout(r, 100));
+                introText.innerHTML = phrase;
+                introText.style.width = '100%';
+                introText.style.transition = `width ${phrase.length * 50}ms steps(${phrase.length})`;
+                await new Promise(r => setTimeout(r, phrase.length * 50 + 800));
+            }
+            intro.style.opacity = '0';
+            setTimeout(() => intro.style.display = 'none', 1000);
+            setTimeout(() => document.querySelector('.hero-content').classList.add('active'), 200);
+        }
+        runIntro();
+
+        // System Time
+        setInterval(() => {
+            document.getElementById('status-time').textContent = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // ===== 3D TILT EFFECT =====
+        const card = document.querySelector('.hero-content');
+        document.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+            card.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg)`;
+        });
+
+        document.addEventListener('mouseleave', () => {
+            card.style.transform = `rotateY(0deg) rotateX(0deg)`;
+        });
+    </script>
+
+
+<audio class="audio-output" style="display: none;"></audio><div id="volume-booster-visusalizer">
+                    <div class="sound">
+                        <div class="sound-icon"></div>
+                        <div class="sound-wave sound-wave_one"></div>
+                        <div class="sound-wave sound-wave_two"></div>
+                        <div class="sound-wave sound-wave_three"></div>
+                    </div>
+                    <div class="segments-box">
+                        <div data-range="1-20" class="segment"><span></span></div>
+                        <div data-range="21-40" class="segment"><span></span></div>
+                        <div data-range="41-60" class="segment"><span></span></div>
+                        <div data-range="61-80" class="segment"><span></span></div>
+                        <div data-range="81-100" class="segment"><span></span></div>
+                    </div>
+                </div></body></html>

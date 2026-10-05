@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIVISION - System Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Prompt:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --cyan: #00f3ff;
+            --cyan-dim: rgba(0, 243, 255, 0.2);
+            --pink: #ff2a6d;
+            --dark-bg: #030a10;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            font-family: 'Share Tech Mono', 'Prompt', monospace;
+            color: var(--cyan);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .glow-text-cyan { text-shadow: 0 0 5px var(--cyan), 0 0 10px var(--cyan); }
+        .glow-text-pink { color: var(--pink); text-shadow: 0 0 5px var(--pink), 0 0 15px var(--pink); }
+
+        /* กรอบ UI แบบล็อกเป้า (Targeting Brackets) */
+        .tech-box {
+            position: relative;
+            background: rgba(3, 10, 16, 0.8);
+            border: 1px solid var(--cyan-dim);
+            box-shadow: inset 0 0 20px rgba(0, 243, 255, 0.02);
+            backdrop-filter: blur(4px);
+        }
+        .tech-box::before, .tech-box::after {
+            content: ''; position: absolute; width: 15px; height: 15px; border: 2px solid var(--cyan);
+        }
+        .tech-box::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+        .tech-box::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+        .tech-box-inner::before, .tech-box-inner::after {
+            content: ''; position: absolute; width: 15px; height: 15px; border: 2px solid var(--cyan);
+        }
+        .tech-box-inner::before { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+        .tech-box-inner::after { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: rgba(0, 243, 255, 0.05); }
+        ::-webkit-scrollbar-thumb { background: var(--cyan); }
+    </style>
+</head>
+<body class="flex flex-col h-screen p-4 md:p-6">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end mb-4 border-b border-[#00f3ff40] pb-3">
+        <div>
+            <h2 class="text-xl md:text-2xl font-bold glow-text-cyan tracking-widest mb-1">AIVISION</h2>
+            <h1 class="text-2xl md:text-4xl font-bold glow-text-pink tracking-wider uppercase">CPE SMART CHAT : TERMINAL</h1>
+            <p class="text-[#00f3ff80] text-xs md:text-sm mt-1">"ระบบผู้ช่วยอัจฉริยะสาขาวิศวกรรมคอมพิวเตอร์"</p>
+        </div>
+        <div class="hidden md:flex gap-4 text-xs tracking-widest mt-4 md:mt-0 text-[#00f3ff80]">
+            <span class="text-[#00f3ff] glow-text-cyan">[ CORE_SYSTEM ]</span>
+            <span class="hover:text-[#00f3ff] cursor-pointer transition-all">[ WORKFLOW ]</span>
+            <span class="hover:text-[#00f3ff] cursor-pointer transition-all">[ DEV_TEAM ]</span>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Layout -->
+    <div class="flex-1 w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 overflow-hidden">
+        
+        <!-- Left Panel: Chat Interface -->
+        <main class="flex-[5] tech-box flex flex-col relative h-full">
+            <div class="tech-box-inner absolute inset-0 pointer-events-none"></div>
+            
+            <!-- Metadata bar -->
+            <div class="flex justify-between items-center px-4 py-2 border-b border-[#00f3ff20] text-[10px] md:text-xs text-[#00f3ff80] bg-[#00f3ff0a]">
+                <span>CONNECTION: <span class="text-[#00f3ff] glow-text-cyan">SECURE</span></span>
+                <span>LATENCY: 24ms | GMT +7</span>
+            </div>
+
+            <!-- Chat History -->
+            <div class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
+                <!-- AI Message -->
+                <div class="flex flex-col items-start max-w-[90%]">
+                    <span class="text-[10px] text-pink-500 mb-1 ml-1 tracking-wider">[ ID: BOT_CPE_V1 ]</span>
+                    <div class="border border-[#00f3ff40] bg-[#00f3ff0a] p-3 md:p-4 text-sm leading-relaxed relative">
+                        <div class="absolute -left-1 top-2 w-1.5 h-8 bg-cyan-400"></div>
+                        <p>SYSTEM INITIALIZED. สวัสดีครับ ผมคือ AI ผู้ช่วยของ CPE PSRU <br>
+                        พร้อมประมวลผลข้อมูลหลักสูตรและการเรียนการสอนครับ</p>
+                    </div>
+                </div>
+
+                <!-- User Message -->
+                <div class="flex flex-col items-end w-full">
+                    <span class="text-[10px] text-[#00f3ff80] mb-1 mr-1 tracking-wider">[ USER_INPUT ]</span>
+                    <div class="border border-pink-500/50 bg-pink-500/10 text-pink-100 p-3 md:p-4 text-sm relative max-w-[90%]">
+                        <div class="absolute -right-1 top-2 w-1.5 h-8 bg-pink-500"></div>
+                        <p>ช่วยแนะนำรายวิชาของสาย Data Engineer หน่อย</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-3 md:p-4 border-t border-[#00f3ff40] bg-[#030a10f0]">
+                <div class="flex items-center gap-3 relative">
+                    <span class="text-[#00f3ff] font-bold">></span>
+                    <input type="text" 
+                        class="flex-1 bg-transparent border-b border-[#00f3ff40] focus:border-[#00f3ff] text-[#00f3ff] px-2 py-1 outline-none placeholder-[#00f3ff30] transition-colors text-sm"
+                        placeholder="ENTER COMMAND...">
+                    <button class="border border-[#00f3ff] text-[#00f3ff] hover:bg-[#00f3ff] hover:text-black hover:glow-text-cyan px-3 py-1.5 text-xs font-bold uppercase transition-all duration-300">
+                        [ TRANSMIT ]
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel: Sidebar Modules -->
+        <aside class="flex-[2] flex flex-col gap-6 h-full overflow-y-auto">
+            
+            <!-- Module 1: Workflow -->
+            <div class="tech-box p-4 relative flex flex-col">
+                <div class="tech-box-inner absolute inset-0 pointer-events-none"></div>
+                <div class="text-[#00f3ff] border-b border-[#00f3ff40] pb-2 mb-4 text-xs font-bold tracking-widest flex justify-between">
+                    <span>> CORE_WORKFLOW.LOG</span>
+                    <span class="text-[#00f3ff80] animate-pulse">● REC</span>
+                </div>
+                
+                <div class="flex flex-col gap-2 text-[11px] md:text-xs tracking-wider">
+                    <div class="bg-[#00f3ff0a] border border-[#00f3ff20] p-2 flex justify-between items-center">
+                        <span class="text-[#00f3ff]">> 01. USER_QUERY</span>
+                        <span class="text-[#00f3ff]">OK</span>
+                    </div>
+                    <div class="text-center text-[#00f3ff40] leading-none">↓</div>
+                    <div class="bg-[#00f3ff0a] border border-[#00f3ff20] p-2 flex justify-between items-center">
+                        <span class="text-[#00f3ff]">> 02. RAG_RETRIEVAL</span>
+                        <span class="text-pink-500">[VECTOR_DB]</span>
+                    </div>
+                    <div class="text-center text-[#00f3ff40] leading-none">↓</div>
+                    <div class="bg-[#00f3ff0a] border border-[#00f3ff20] p-2 flex justify-between items-center">
+                        <span class="text-[#00f3ff]">> 03. LLM_PROCESSING</span>
+                        <span class="text-pink-500 animate-pulse">[THINKING]</span>
+                    </div>
+                    <div class="text-center text-[#00f3ff40] leading-none">↓</div>
+                    <div class="bg-[#00f3ff05] border border-[#00f3ff10] p-2 flex justify-between items-center text-[#00f3ff40]">
+                        <span>> 04. OUTPUT_GENERATE</span>
+                        <span>WAIT</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Module 2: Dev Team -->
+            <div class="tech-box flex-1 p-4 relative flex flex-col">
+                <div class="tech-box-inner absolute inset-0 pointer-events-none"></div>
+                <div class="text-[#00f3ff] border-b border-[#00f3ff40] pb-2 mb-4 text-xs font-bold tracking-widest">
+                    > DEV_TEAM.SYS
+                </div>
+                
+                <ul class="space-y-4 flex-1">
+                    <!-- Leader -->
+                    <li class="border-l-2 border-pink-500 pl-3 bg-[#ff2a6d0a] py-2 pr-2">
+                        <span class="text-[10px] text-pink-500 block mb-0.5 tracking-widest">[ LEADER ]</span>
+                        <div class="flex justify-between items-end">
+                            <span class="text-gray-200 text-sm font-medium">ชิษณุพงศ์ คงช้าง</span>
+                            <span class="text-pink-500/70 text-[10px]">ID:6612247016</span>
+                        </div>
+                    </li>
+                    
+                    <!-- Data Engineer -->
+                    <li class="border-l-2 border-cyan-400 pl-3 bg-[#00f3ff0a] py-2 pr-2">
+                        <span class="text-[10px] text-cyan-400 block mb-0.5 tracking-widest">[ DATA ENGINEER ]</span>
+                        <div class="flex justify-between items-end">
+                            <span class="text-gray-200 text-sm font-medium">ภูรี รัชตวัชโรชา</span>
+                            <span class="text-cyan-400/70 text-[10px]">ID:6612247023</span>
+                        </div>
+                    </li>
+
+                    <!-- UX/UI -->
+                    <li class="border-l-2 border-cyan-400 pl-3 bg-[#00f3ff0a] py-2 pr-2">
+                        <span class="text-[10px] text-cyan-400 block mb-0.5 tracking-widest">[ UX/UI DESIGNER ]</span>
+                        <div class="flex justify-between items-end">
+                            <span class="text-gray-200 text-sm font-medium">ฐัฏชนนท์ วัยนิพลี</span>
+                            <span class="text-cyan-400/70 text-[10px]">ID:6612247017</span>
+                        </div>
+                    </li>
+                </ul>
+                
+                <!-- System signature -->
+                <div class="mt-4 pt-2 border-t border-[#00f3ff20] text-right text-[9px] text-[#00f3ff50] tracking-widest">
+                    PSRU ENGINEERING © 2024
+                </div>
+            </div>
+
+        </aside>
+    </div>
+
+</body>
+</html>

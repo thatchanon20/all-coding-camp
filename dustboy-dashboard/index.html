@@ -1,0 +1,619 @@
+<html lang="th"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Oracle HUD | DustBoy 3.0</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&amp;family=Space+Mono&amp;display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --cyan: #00f2ff;
+            --violet: #7000ff;
+            --gold: #ffd700;
+            --bg: #02040a;
+            --glass: rgba(0, 242, 255, 0.03);
+            --border: rgba(0, 242, 255, 0.15);
+            --text: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+        }
+
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        .hud-overlay {
+            position: relative;
+            z-index: 10;
+            height: 100vh;
+            display: grid;
+            grid-template-columns: 400px 1fr 400px;
+            padding: 40px;
+            gap: 30px;
+            pointer-events: none;
+        }
+
+        .panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            padding: 40px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+            animation: scanline 4s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* HUD Typing/Mono Font */
+        .mono {
+            font-family: 'Space Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        /* Branding */
+        .branding h1 {
+            font-size: 0.7rem;
+            letter-spacing: 8px;
+            color: var(--cyan);
+            margin-bottom: 15px;
+        }
+
+        .branding .title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            line-height: 1;
+            margin-bottom: 30px;
+            background: linear-gradient(to bottom, #fff, var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Gauges */
+        .telemetry-node {
+            margin-bottom: 40px;
+        }
+
+        .label-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .label {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            letter-spacing: 2px;
+        }
+
+        .value {
+            font-size: 4.5rem;
+            font-weight: 700;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .unit {
+            font-size: 0.8rem;
+            color: var(--cyan);
+            font-weight: 600;
+        }
+
+        .indicator-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            margin-top: 15px;
+            position: relative;
+        }
+
+        .indicator-fill {
+            height: 100%;
+            background: var(--cyan);
+            box-shadow: 0 0 15px var(--cyan);
+            width: 0%;
+            transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Center Visual */
+        .center-hub {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .crosshair {
+            width: 200px;
+            height: 200px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            position: relative;
+            margin-bottom: 50px;
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: var(--cyan);
+        }
+
+        .crosshair::before {
+            width: 100%;
+            height: 1px;
+            top: 50%;
+            left: 0;
+        }
+
+        .crosshair::after {
+            width: 1px;
+            height: 100%;
+            top: 0;
+            left: 50%;
+        }
+
+        .location-tag {
+            font-size: 2.5rem;
+            font-weight: 300;
+            letter-spacing: 5px;
+            border-bottom: 1px solid var(--cyan);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Right Panel: Nodes & Logs */
+        .node-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding-right: 10px;
+        }
+
+        .node-item {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeInHUD 0.5s ease-out forwards;
+        }
+
+        @keyframes fadeInHUD {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .node-info .name {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .node-info .time {
+            font-size: 0.6rem;
+            opacity: 0.4;
+        }
+
+        .node-stats {
+            text-align: right;
+        }
+
+        .node-stats .val {
+            font-size: 1.2rem;
+            color: var(--cyan);
+            font-weight: 700;
+        }
+
+        /* Scanning Artifacts */
+        .flicker {
+            animation: flick 0.1s infinite alternate;
+        }
+
+        @keyframes flick {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        /* System Messages */
+        #stat-msg {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.6rem;
+            color: var(--cyan);
+            letter-spacing: 2px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="three-canvas" width="1536" height="742" style="width: 1536px; height: 742px;"></canvas>
+
+    <div class="hud-overlay">
+        <!-- Dashboard Alpha -->
+        <div class="panel">
+            <div class="branding">
+                <h1 class="mono flicker">Quantum Oracle v3.0</h1>
+                <div class="title">TWO RIVERS<br>TELEMETRY</div>
+            </div>
+
+            <div class="telemetry-node">
+                <div class="label-group">
+                    <span class="label mono">Primary Pollutant</span>
+                    <span class="unit">PM2.5 μg/m³</span>
+                </div>
+                <div class="value" id="val-pm25">0</div>
+                <div class="indicator-bar">
+                    <div class="indicator-fill" id="fill-pm25" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <div class="telemetry-node">
+                <div class="label-group">
+                    <span class="label mono">Secondary Matter</span>
+                    <span class="unit">PM10 μg/m³</span>
+                </div>
+                <div class="value" id="val-pm10" style="color: var(--violet); text-shadow: 0 0 20px rgba(112, 0, 255, 0.3);">0</div>
+                <div class="indicator-bar">
+                    <div class="indicator-fill" id="fill-pm10" style="background: var(--violet); box-shadow: 0 0 15px var(--violet); width: 0%;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top: auto; padding-top: 20px; font-size: 0.7rem; border-top: 1px solid var(--border);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                    <span class="mono">Network Status</span>
+                    <span id="stat-conn" style="color: var(--cyan);" class="mono">ONLINE</span>
+                </div>
+                <div class="mono" style="opacity: 0.4;">Secure Bridge: WSS://DUSTBOY-GATEWAY</div>
+            </div>
+        </div>
+
+        <!-- Center Visual -->
+        <div class="center-hub">
+            <div class="crosshair"></div>
+            <div class="label mono" style="margin-bottom: 10px;">Geographic Focus</div>
+            <div class="location-tag" id="val-loc">N-172</div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 60px;">
+                <div>
+                    <div class="label mono">Temp</div>
+                    <div style="font-size: 2.5rem; font-weight: 700;" id="val-temp">33°C</div>
+                </div>
+                <div>
+                    <div class="label mono">Humid</div>
+                    <div style="font-size: 2.5rem; font-weight: 700;" id="val-humid">54%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Node Registry -->
+        <div class="panel">
+            <div class="mono" style="font-size: 0.8rem; letter-spacing: 4px; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px;">
+                Active Oracle Nodes
+            </div>
+            <div class="node-list" id="node-list"><div class="node-item" id="node-N-131">
+                <div class="node-info">
+                    <div class="name">N-131</div>
+                    <div class="time mono">10:26:12 PM</div>
+                </div>
+                <div class="node-stats">
+                    <div class="val mono">7</div>
+                    <div class="label mono" style="font-size:0.5rem;">AQI READY</div>
+                </div>
+            </div><div class="node-item" id="node-N-121">
+                <div class="node-info">
+                    <div class="name">N-121</div>
+                    <div class="time mono">10:26:11 PM</div>
+                </div>
+                <div class="node-stats">
+                    <div class="val mono">0</div>
+                    <div class="label mono" style="font-size:0.5rem;">AQI READY</div>
+                </div>
+            </div><div class="node-item" id="node-N-172">
+                <div class="node-info">
+                    <div class="name">N-172</div>
+                    <div class="time mono">10:26:16 PM</div>
+                </div>
+                <div class="node-stats">
+                    <div class="val mono">0</div>
+                    <div class="label mono" style="font-size:0.5rem;">AQI READY</div>
+                </div>
+            </div><div class="node-item" id="node-N-123">
+                <div class="node-info">
+                    <div class="name">N-123</div>
+                    <div class="time mono">10:26:10 PM</div>
+                </div>
+                <div class="node-stats">
+                    <div class="val mono">1</div>
+                    <div class="label mono" style="font-size:0.5rem;">AQI READY</div>
+                </div>
+            </div><div class="node-item" id="node-N-138">
+                <div class="node-info">
+                    <div class="name">N-138</div>
+                    <div class="time mono">10:26:08 PM</div>
+                </div>
+                <div class="node-stats">
+                    <div class="val mono">5</div>
+                    <div class="label mono" style="font-size:0.5rem;">AQI READY</div>
+                </div>
+            </div></div>
+            <div style="margin-top: 20px; font-size: 0.6rem; opacity: 0.4;" class="mono">
+                System Time: <span id="sys-time">10:26:16 PM</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="stat-msg" class="mono">SYSTEM // ORACLE SYNCED: N-172</div>
+
+    <script>
+        // --- THREE.JS BACKGROUND ---
+        const canvas = document.getElementById('three-canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        // Particles
+        const partCount = 2000;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(partCount * 3);
+        const sizes = new Float32Array(partCount);
+
+        for (let i = 0; i < partCount * 3; i++) {
+            pos[i] = (Math.random() - 0.5) * 20;
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+        const mat = new THREE.PointsMaterial({
+            color: 0x00f2ff,
+            size: 0.05,
+            transparent: true,
+            opacity: 0.5,
+            blending: THREE.AdditiveBlending
+        });
+
+        const points = new THREE.Points(geo, mat);
+        scene.add(points);
+
+        // Core Sphere
+        const coreGeo = new THREE.IcosahedronGeometry(1.5, 4);
+        const coreMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true, transparent: true, opacity: 0.1 });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        let intensity = 1;
+        function animate() {
+            requestAnimationFrame(animate);
+            points.rotation.y += 0.001 * intensity;
+            points.rotation.x += 0.0005 * intensity;
+            core.rotation.y -= 0.002 * intensity;
+
+            // Pulse logic
+            const time = Date.now() * 0.001;
+            core.scale.setScalar(1 + Math.sin(time) * 0.05 * intensity);
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // --- QUANTUM DATA EXTRACTION ENGINE ---
+        function extractValue(data, patterns) {
+            const telemetry = data.d || data; // Handle nested 'd' object
+
+            // 1. Precise Match
+            for (const p of patterns) {
+                if (telemetry[p] !== undefined) return parseFloat(telemetry[p]);
+            }
+
+            // 2. Fuzzy Match (Snake case, prefixes, suffixes)
+            const keys = Object.keys(telemetry);
+            for (const k of keys) {
+                const kLow = k.toLowerCase();
+                for (const p of patterns) {
+                    if (kLow.includes(p) || kLow.replace('_', '').includes(p) || p.includes(kLow)) return parseFloat(telemetry[k]);
+                }
+            }
+            return 0;
+        }
+
+        function extractName(data, topic) {
+            const parts = topic.split('/');
+            const telemetry = data.d || data;
+
+            // Priority 1: Data field myName or nickname
+            if (telemetry.myName) return telemetry.myName;
+            if (telemetry.nickname) return telemetry.nickname;
+            if (telemetry.db_name) return telemetry.db_name;
+
+            // Priority 2: Topic Index 3 or 2
+            if (parts[3] && parts[3] !== 'status') return parts[3];
+            return parts[2] || "ORACLE-NODE";
+        }
+
+        // --- MQTT & DATA LOGIC ---
+        const client = mqtt.connect('wss://dustboy-wss-bridge.laris.workers.dev/mqtt');
+
+        client.on('connect', () => {
+            const statusEl = document.getElementById('stat-conn');
+            statusEl.innerText = 'ONLINE';
+            statusEl.style.color = 'var(--cyan)';
+            statusEl.classList.remove('flicker');
+            client.subscribe('DUSTBOY/+/+/+/status');
+            systemMsg("LINK ESTABLISHED");
+        });
+
+        client.on('message', (topic, message) => {
+            try {
+                const raw = message.toString();
+                const data = JSON.parse(raw);
+                updateHUD(data, topic);
+                // Debug to sniffer if we had one (let's add a small console log for user)
+                console.log(`[ORACLE] RECEIVED: ${topic}`, data);
+            } catch (e) {
+                systemMsg("DATA PARSE ERROR");
+            }
+        });
+
+        function updateHUD(data, topic) {
+            // Comprehensive Key Mapping
+            const pm25 = extractValue(data, ['pm2_5', 'pm25', 'v25', 'p2', 'dust']);
+            const pm10 = extractValue(data, ['pm10', 'v10', 'p1', 'pm_10']);
+            const temp = extractValue(data, ['temperature', 'temp', 'tp', 't', 'tmp', 'temp_c']);
+            const humid = parseFloat(extractValue(data, ['humidity', 'humid', 'hm', 'h', 'hum', 'hum_rh']));
+            const loc = extractName(data, topic);
+
+            // Update UI Elements
+            document.getElementById('val-pm25').innerText = Math.round(pm25) || 0;
+            document.getElementById('val-pm10').innerText = Math.round(pm10) || 0;
+            document.getElementById('val-temp').innerText = temp ? `${Math.round(temp)}°C` : '--°C';
+            document.getElementById('val-humid').innerText = humid ? `${Math.round(humid)}%` : '--%';
+            document.getElementById('val-loc').innerText = loc;
+
+            // Indicator Fills
+            document.getElementById('fill-pm25').style.width = Math.min(pm25, 100) + '%';
+            document.getElementById('fill-pm10').style.width = Math.min(pm10, 100) + '%';
+
+            // Visual Intensity Modulation
+            intensity = 1 + (pm25 / 40);
+            const hue = 180 - (pm25 * 3.6); // Cyan to Red (approx)
+            mat.color.setHSL(hue / 360, 1, 0.5);
+
+            // HUD Registry
+            registryNode(loc, pm25);
+            systemMsg(`ORACLE SYNCED: ${loc}`);
+        }
+
+        function registryNode(name, pm25) {
+            const list = document.getElementById('node-list');
+
+            // Remove blank msg
+            if (list.innerText.includes("Syncing")) list.innerHTML = "";
+
+            // Check if node already exists
+            let item = document.getElementById(`node-${name.replace(/\s+/g, '-')}`);
+            if (!item) {
+                item = document.createElement('div');
+                item.className = 'node-item';
+                item.id = `node-${name.replace(/\s+/g, '-')}`;
+                list.insertBefore(item, list.firstChild);
+            }
+
+            item.innerHTML = `
+                <div class="node-info">
+                    <div class="name">${name}</div>
+                    <div class="time mono">${new Date().toLocaleTimeString()}</div>
+                </div>
+                <div class="node-stats">
+                    <div class="val mono">${Math.round(pm25)}</div>
+                    <div class="label mono" style="font-size:0.5rem;">AQI READY</div>
+                </div>
+            `;
+
+            // Keep only top 5
+            if (list.children.length > 5) list.lastChild.remove();
+        }
+
+        function systemMsg(msg) {
+            document.getElementById('stat-msg').innerText = `SYSTEM // ${msg}`;
+        }
+
+        // Clock
+        setInterval(() => {
+            document.getElementById('sys-time').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+
+
+<audio class="audio-output" style="display: none;"></audio><div id="volume-booster-visusalizer">
+                    <div class="sound">
+                        <div class="sound-icon"></div>
+                        <div class="sound-wave sound-wave_one"></div>
+                        <div class="sound-wave sound-wave_two"></div>
+                        <div class="sound-wave sound-wave_three"></div>
+                    </div>
+                    <div class="segments-box">
+                        <div data-range="1-20" class="segment"><span></span></div>
+                        <div data-range="21-40" class="segment"><span></span></div>
+                        <div data-range="41-60" class="segment"><span></span></div>
+                        <div data-range="61-80" class="segment"><span></span></div>
+                        <div data-range="81-100" class="segment"><span></span></div>
+                    </div>
+                </div></body></html>
